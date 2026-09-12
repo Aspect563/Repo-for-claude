@@ -21,30 +21,54 @@ jobs:
           python-version: '3.11'
       - name: Install deps
         run: pip install youtube-transcript-api
-      - name: Test proxies
+      - name: Test proxies raw
         run: |
           for p in 142.54.237.38:4145 67.201.59.70:4145 68.71.243.14:4145; do
             echo "Testing $p"
             curl -s --socks5 "$p" --connect-timeout 8 -o /dev/null -w "  HTTP:%{http_code} time:%{time_total}s\n" https://api.github.com || echo "  curl failed"
           done
-      - name: Fetch transcript
+      - name: Fetch transcript via proxies
         run: |
-          python3 -c "
+          cat > fetch.py << 'PYEOF'
           from youtube_transcript_api import YouTubeTranscriptApi
-          import json
-          vid = '${{ github.event.inputs.video_id }}'
-          try:
-              api = YouTubeTranscriptApi()
-              t = api.fetch(vid)
-              lines = [snippet.text for snippet in t]
-              with open('transcript_output.txt', 'w') as f:
-                  f.write('\n'.join(lines))
-              print('SUCCESS, length:', len(lines))
-          except Exception as e:
-              with open('transcript_output.txt', 'w') as f:
-                  f.write(f'ERROR: {type(e).__name__}: {e}')
-              print('FAILED:', e)
-          "
+          from youtube_transcript_api.proxies import GenericProxyConfig
+          import sys
+
+          vid = sys.argv[1]
+          proxies = ["142.54.237.38:4145", "67.201.59.70:4145", "68.71.243.14:4145"]
+          result = None
+          errors = []
+
+          for p in proxies:
+              try:
+                  proxy_url = f"socks5://{p}"
+                  config = GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
+                  api = YouTubeTranscriptApi(proxy_config=config)
+                  t = api.fetch(vid)
+                  result = "\n".join(s.text for s in t)
+                  errors.append(f"{p}: SUCCESS")
+                  break
+              except Exception as e:
+                  errors.append(f"{p}: {type(e).__name__}: {e}")
+
+          if result is None:
+              # also try with no proxy as final fallback, for comparison
+              try:
+                  api = YouTubeTranscriptApi()
+                  t = api.fetch(vid)
+                  result = "\n".join(s.text for s in t)
+                  errors.append("no-proxy: SUCCESS")
+              except Exception as e:
+                  errors.append(f"no-proxy: {type(e).__name__}: {e}")
+
+          with open("transcript_output.txt", "w") as f:
+              if result:
+                  f.write(result)
+              else:
+                  f.write("ALL ATTEMPTS FAILED:\n" + "\n".join(errors))
+          print("\n".join(errors))
+          PYEOF
+          python3 fetch.py "${{ github.event.inputs.video_id }}"
       - name: Commit result
         run: |
           git config user.name "github-actions"
