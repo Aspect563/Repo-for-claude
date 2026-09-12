@@ -36,11 +36,22 @@ jobs:
               )
               api = YouTubeTranscriptApi(proxy_config=config)
               transcript_list = api.list(vid)
-              try:
-                  t = transcript_list.find_transcript(['en'])
-              except Exception:
-                  t = transcript_list.find_transcript(['hi']).translate('en')
-              t = t.fetch()
+              import time
+              last_err = None
+              t = None
+              for attempt in range(4):
+                  try:
+                      try:
+                          tt = transcript_list.find_transcript(['en'])
+                      except Exception:
+                          tt = transcript_list.find_transcript(['hi'])
+                      t = tt.fetch()
+                      break
+                  except Exception as e:
+                      last_err = e
+                      time.sleep(15 * (attempt + 1))
+              if t is None:
+                  raise last_err
               result = "\n".join(s.text for s in t)
               with open("transcript_output.txt", "w") as f:
                   f.write(result)
