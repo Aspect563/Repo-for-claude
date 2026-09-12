@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Regret Calculator</title>
+<meta name="description" content="Type a decision. Get an estimate of how long you'll think about it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FFF8E7;
+    --ink: #1A1A2E;
+    --ink-soft: #2D2D44;
+    --accent: #FF6B35;
+    --accent-cool: #4ECDC4;
+    --line: rgba(26, 26, 46, 0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  ::selection { background: var(--accent); color: var(--paper); }
+
+  nav {
+    padding: 1.5rem 1.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+  }
+  nav a { color: var(--ink-soft); text-decoration: none; }
+  nav a:hover { color: var(--accent); }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem 5rem;
+    text-align: center;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-bottom: 1.2rem;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.05;
+    max-width: 16ch;
+    letter-spacing: -0.01em;
+  }
+  h1 em { font-style: italic; font-weight: 300; color: var(--accent); }
+
+  .intro {
+    margin-top: 1.2rem;
+    max-width: 440px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    font-size: 1.02rem;
+  }
+
+  form {
+    margin-top: 2.5rem;
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 0.6rem;
+    text-align: left;
+  }
+  .input-row span.prefix {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    margin-right: 0.5rem;
+    font-size: 1.05rem;
+  }
+  #decisionInput {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    color: var(--ink);
+    min-width: 0;
+  }
+  #decisionInput::placeholder { color: rgba(26,26,46,0.35); }
+
+  .calc-btn {
+    align-self: center;
+    margin-top: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0.9rem 1.9rem;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .calc-btn:hover { background: var(--accent); transform: translateY(-2px); }
+  .calc-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .result {
+    margin-top: 3rem;
+    max-width: 560px;
+    display: none;
+  }
+  .result.visible { display: block; animation: rise 0.5s cubic-bezier(0.16,1,0.3,1); }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-number {
+    font-size: clamp(2.4rem, 8vw, 4.2rem);
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .result-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    margin-top: 0.5rem;
+  }
+  .result-line {
+    margin-top: 1.6rem;
+    font-size: 1.15rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .result-meta {
+    margin-top: 1.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    opacity: 0.75;
+  }
+
+  .again-btn {
+    margin-top: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--line);
+    padding: 0.7rem 1.3rem;
+    border-radius: 100px;
+    cursor: pointer;
+  }
+  .again-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    opacity: 0.5;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<nav><a href="index.html">← back to idle machines</a></nav>
+
+<main>
+  <div class="eyebrow mono">A DECISION-WEIGHT ESTIMATOR OF QUESTIONABLE SCIENCE</div>
+  <h1>The <em>Regret</em> Calculator</h1>
+  <p class="intro">Tell it a decision you're sitting on. It will tell you, with complete unearned confidence, how long it will occupy your brain.</p>
+
+  <form id="regretForm">
+    <div class="input-row">
+      <span class="prefix">I'm not sure whether to</span>
+      <input type="text" id="decisionInput" placeholder="quit my job / text them back / get the bangs" maxlength="80" autocomplete="off">
+    </div>
+    <button type="submit" class="calc-btn" id="calcBtn">Calculate the damage</button>
+  </form>
+
+  <div class="result" id="result">
+    <div class="result-number" id="resultNumber"></div>
+    <div class="result-unit mono" id="resultUnit"></div>
+    <div class="result-line" id="resultLine"></div>
+    <div class="result-meta mono" id="resultMeta"></div>
+    <button class="again-btn" id="againBtn">Calculate a different regret</button>
+  </div>
+</main>
+
+<footer>ESTIMATES ARE GENERATED, NOT MEASURED. LIKE MOST ADVICE YOU'VE EVER RECEIVED.</footer>
+
+<script>
+  const form = document.getElementById('regretForm');
+  const input = document.getElementById('decisionInput');
+  const result = document.getElementById('result');
+  const resultNumber = document.getElementById('resultNumber');
+  const resultUnit = document.getElementById('resultUnit');
+  const resultLine = document.getElementById('resultLine');
+  const resultMeta = document.getElementById('resultMeta');
+  const againBtn = document.getElementById('againBtn');
+
+  const units = [
+    { max: 30, label: 'minutes', lines: [
+      d => `Honestly? You'll forget about "${d}" by dinner.`,
+      d => `"${d}" will not survive contact with your next notification.`,
+    ]},
+    { max: 6, label: 'hours', lines: [
+      d => `You'll think about "${d}" on and off until you fall asleep, then never again.`,
+      d => `"${d}" gets a full afternoon of your attention. Then it's someone else's turn.`,
+    ]},
+    { max: 14, label: 'days', lines: [
+      d => `"${d}" is a two-week thought. It'll surface in the shower a few times, then quietly retire.`,
+      d => `You'll bring up "${d}" to one (1) friend, get validated, and mostly let it go.`,
+    ]},
+    { max: 8, label: 'months', lines: [
+      d => `"${d}" is the kind of thing you'll reconsider every time something reminds you of it. Rude of the universe, honestly.`,
+      d => `Expect "${d}" to resurface around 2am at least twice more before it fades.`,
+    ]},
+    { max: 40, label: 'years', lines: [
+      d => `"${d}" is a decades one. You'll tell this story at parties eventually, softened into something funnier than it was.`,
+      d => `"${d}" becomes a core memory. Not a bad one, necessarily. Just a permanent one.`,
+    ]},
+    { max: Infinity, label: 'a lifetime, on and off', lines: [
+      d => `"${d}" is the one you bring up on your deathbed, probably. Sorry. That's just how the math worked out.`,
+      d => `There is no version of your life where "${d}" doesn't occasionally cross your mind. Make peace with it now.`,
+    ]},
+  ];
+
+  // Simple deterministic-ish hash so the same input gives the same result,
+  // but different inputs land differently. Not "real," just consistent.
+  function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  }
+
+  function calculate(decision) {
+    const clean = decision.trim();
+    const hash = hashString(clean.toLowerCase());
+    const tierIndex = hash % units.length;
+    const tier = units[tierIndex];
+
+    let amount;
+    if (tier.label === 'minutes') amount = 3 + (hash % 27);
+    else if (tier.label === 'hours') amount = 1 + (hash % 6);
+    else if (tier.label === 'days') amount = 2 + (hash % 13);
+    else if (tier.label === 'months') amount = 1 + (hash % 8);
+    else if (tier.label === 'years') amount = 2 + (hash % 39);
+    else amount = null;
+
+    const lineFn = tier.lines[hash % tier.lines.length];
+    return { amount, unit: tier.label, line: lineFn(clean) };
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const decision = input.value.trim();
+    if (!decision) {
+      input.focus();
+      return;
+    }
+    const calc = calculate(decision);
+    if (calc.amount === null) {
+      resultNumber.textContent = '∞';
+    } else {
+      resultNumber.textContent = calc.amount;
+    }
+    resultUnit.textContent = calc.unit.toUpperCase();
+    resultLine.textContent = calc.line;
+    resultMeta.textContent = `CONFIDENCE: SUSPICIOUSLY HIGH · SAMPLE SIZE: 1`;
+    result.classList.add('visible');
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  againBtn.addEventListener('click', () => {
+    result.classList.remove('visible');
+    input.value = '';
+    input.focus();
+  });
+</script>
+
+</body>
+</html>
