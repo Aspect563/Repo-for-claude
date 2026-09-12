@@ -1,4 +1,8 @@
-ERROR: RequestBlocked: 
+ALL ATTEMPTS FAILED:
+142.54.237.38:4145: InvalidSchema: Missing dependencies for SOCKS support.
+67.201.59.70:4145: InvalidSchema: Missing dependencies for SOCKS support.
+68.71.243.14:4145: InvalidSchema: Missing dependencies for SOCKS support.
+no-proxy: RequestBlocked: 
 Could not retrieve a transcript for the video https://www.youtube.com/watch?v=2VmjCxXBW-c! This is most likely caused by:
 
 YouTube is blocking requests from your IP. This usually is due to one of the following reasons:
