@@ -21,65 +21,35 @@ jobs:
           python-version: '3.11'
       - name: Install deps
         run: pip install youtube-transcript-api "requests[socks]" PySocks
-      - name: Test proxies raw
-        run: |
-          {
-          for p in 142.54.237.38:4145 67.201.59.70:4145 68.71.243.14:4145; do
-            echo "=== Testing $p ==="
-            echo "--- Plain HTTP (no TLS) via proxy ---"
-            curl -s --socks5 "$p" --connect-timeout 8 -o /dev/null -w "HTTP:%{http_code} time:%{time_total}s\n" http://example.com || echo "curl failed"
-            echo "--- HTTPS via proxy, verbose ---"
-            curl -sv --socks5 "$p" --connect-timeout 8 https://example.com 2>&1 | grep -E "Connected|SSL|TLS|error|HTTP/" | head -10
-            echo ""
-          done
-          } > proxy_diagnostics.txt 2>&1
-          cat proxy_diagnostics.txt
-      - name: Fetch transcript via proxies
+      - name: Fetch transcript via Webshare
         run: |
           cat > fetch.py << 'PYEOF'
           from youtube_transcript_api import YouTubeTranscriptApi
-          from youtube_transcript_api.proxies import GenericProxyConfig
+          from youtube_transcript_api.proxies import WebshareProxyConfig
           import sys
 
           vid = sys.argv[1]
-          proxies = ["142.54.237.38:4145", "67.201.59.70:4145", "68.71.243.14:4145"]
-          result = None
-          errors = []
-
-          for p in proxies:
-              try:
-                  proxy_url = f"socks5://{p}"
-                  config = GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
-                  api = YouTubeTranscriptApi(proxy_config=config)
-                  t = api.fetch(vid)
-                  result = "\n".join(s.text for s in t)
-                  errors.append(f"{p}: SUCCESS")
-                  break
-              except Exception as e:
-                  errors.append(f"{p}: {type(e).__name__}: {e}")
-
-          if result is None:
-              # also try with no proxy as final fallback, for comparison
-              try:
-                  api = YouTubeTranscriptApi()
-                  t = api.fetch(vid)
-                  result = "\n".join(s.text for s in t)
-                  errors.append("no-proxy: SUCCESS")
-              except Exception as e:
-                  errors.append(f"no-proxy: {type(e).__name__}: {e}")
-
-          with open("transcript_output.txt", "w") as f:
-              if result:
+          try:
+              config = WebshareProxyConfig(
+                  proxy_username="islzhoxm",
+                  proxy_password="icrjm8r2wyc6",
+              )
+              api = YouTubeTranscriptApi(proxy_config=config)
+              t = api.fetch(vid)
+              result = "\n".join(s.text for s in t)
+              with open("transcript_output.txt", "w") as f:
                   f.write(result)
-              else:
-                  f.write("ALL ATTEMPTS FAILED:\n" + "\n".join(errors))
-          print("\n".join(errors))
+              print("SUCCESS, lines:", len(result.splitlines()))
+          except Exception as e:
+              with open("transcript_output.txt", "w") as f:
+                  f.write(f"WEBSHARE FAILED: {type(e).__name__}: {e}")
+              print("FAILED:", e)
           PYEOF
           python3 fetch.py "${{ github.event.inputs.video_id }}"
       - name: Commit result
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add transcript_output.txt proxy_diagnostics.txt
-          git commit -m "Add transcript and diagnostic output" || echo "nothing to commit"
+          git add transcript_output.txt
+          git commit -m "Add transcript output" || echo "nothing to commit"
           git push
