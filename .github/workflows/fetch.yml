@@ -1,0 +1,45 @@
+name: Fetch YouTube Transcript
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: 'YouTube video ID'
+        required: true
+        default: '2VmjCxXBW-c'
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install youtube-transcript-api
+      - name: Fetch transcript
+        run: |
+          python3 -c "
+          from youtube_transcript_api import YouTubeTranscriptApi
+          import json
+          vid = '${{ github.event.inputs.video_id }}'
+          try:
+              api = YouTubeTranscriptApi()
+              t = api.fetch(vid)
+              lines = [snippet.text for snippet in t]
+              with open('transcript_output.txt', 'w') as f:
+                  f.write('\n'.join(lines))
+              print('SUCCESS, length:', len(lines))
+          except Exception as e:
+              with open('transcript_output.txt', 'w') as f:
+                  f.write(f'ERROR: {type(e).__name__}: {e}')
+              print('FAILED:', e)
+          "
+      - name: Commit result
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add transcript_output.txt
+          git commit -m "Add transcript output" || echo "nothing to commit"
+          git push
