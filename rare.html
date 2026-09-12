@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Rare Are You?</title>
+<meta name="description" content="Answer a few questions. Watch the population shrink down to people exactly like you.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FFF8E7;
+    --ink: #1A1A2E;
+    --ink-soft: #2D2D44;
+    --accent: #FF6B35;
+    --accent-cool: #4ECDC4;
+    --line: rgba(26, 26, 46, 0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  ::selection { background: var(--accent-cool); color: var(--ink); }
+
+  nav {
+    padding: 1.5rem 1.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  nav a { color: var(--ink-soft); text-decoration: none; }
+  nav a:hover { color: var(--accent-cool); }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 1.5rem 5rem;
+    text-align: center;
+  }
+
+  .pop-display {
+    margin-bottom: 2.5rem;
+  }
+  .pop-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-bottom: 0.5rem;
+  }
+  .pop-number {
+    font-size: clamp(2.4rem, 8vw, 4rem);
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-cool);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .pop-sub {
+    margin-top: 0.4rem;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  #quizStage { width: 100%; max-width: 560px; }
+
+  .question-card { display: none; }
+  .question-card.active { display: block; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-index {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-bottom: 1rem;
+  }
+  .q-text {
+    font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 2rem;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .option-btn {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    padding: 1rem 1.5rem;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    color: var(--ink);
+  }
+  .option-btn:hover { border-color: var(--accent-cool); background: rgba(78,205,196,0.08); }
+
+  .final-card { display: none; text-align: center; }
+  .final-card.active { display: block; animation: fadeUp 0.5s ease; }
+
+  .final-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 1rem; }
+  .final-number {
+    font-size: clamp(3rem, 12vw, 6rem);
+    font-weight: 900;
+    color: var(--accent-cool);
+    line-height: 1;
+  }
+  .final-caption {
+    margin-top: 1.3rem;
+    max-width: 460px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .final-meta {
+    margin-top: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+
+  .again-btn {
+    margin-top: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--line);
+    padding: 0.7rem 1.3rem;
+    border-radius: 100px;
+    cursor: pointer;
+  }
+  .again-btn:hover { border-color: var(--accent-cool); color: var(--accent-cool); }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    opacity: 0.5;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent-cool); outline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← back to idle machines</a>
+  <span class="mono" id="progressLabel">1 / 6</span>
+</nav>
+
+<main>
+  <div class="pop-display">
+    <div class="pop-label mono">PEOPLE WHO MATCH YOU SO FAR</div>
+    <div class="pop-number" id="popNumber">8,000,000,000</div>
+    <div class="pop-sub" id="popSub">everyone alive, currently</div>
+  </div>
+
+  <div id="quizStage"></div>
+
+  <div class="final-card" id="finalCard">
+    <div class="final-eyebrow mono">FINAL COUNT</div>
+    <div class="final-number" id="finalNumber"></div>
+    <p class="final-caption" id="finalCaption"></p>
+    <div class="final-meta mono">METHODOLOGY: MADE UP, BUT THE MATH IS REAL</div>
+    <button class="again-btn" id="againBtn">Run it again</button>
+  </div>
+</main>
+
+<footer>POPULATION FIGURES ARE ROUGH ESTIMATES BASED ON REAL DEMOGRAPHIC PROPORTIONS.</footer>
+
+<script>
+  const START_POP = 8_000_000_000;
+
+  // Each answer has a "survival fraction" — the rough proportion of the
+  // remaining pool that shares that trait. Not scientific, just plausible.
+  const questions = [
+    {
+      text: "Which hand do you write with?",
+      options: [
+        { label: "Right", frac: 0.90 },
+        { label: "Left", frac: 0.10 },
+      ]
+    },
+    {
+      text: "Pineapple on pizza?",
+      options: [
+        { label: "Yes, and I will defend it", frac: 0.35 },
+        { label: "No, and I will also defend that", frac: 0.65 },
+      ]
+    },
+    {
+      text: "You wake up with no plans. What happens first?",
+      options: [
+        { label: "Phone, immediately, before eyes fully open", frac: 0.55 },
+        { label: "Lie there and think about stuff", frac: 0.30 },
+        { label: "Up and moving within a minute", frac: 0.15 },
+      ]
+    },
+    {
+      text: "Someone's chewing loudly near you. Internally, you are:",
+      options: [
+        { label: "Completely fine, don't notice", frac: 0.60 },
+        { label: "Quietly losing my mind", frac: 0.40 },
+      ]
+    },
+    {
+      text: "Your ideal Friday night, honestly:",
+      options: [
+        { label: "Out, loud, somewhere with people", frac: 0.32 },
+        { label: "In, quiet, maybe one other person", frac: 0.48 },
+        { label: "Alone, no negotiation", frac: 0.20 },
+      ]
+    },
+    {
+      text: "You just remembered something embarrassing from 2016. When?",
+      options: [
+        { label: "In the shower, obviously", frac: 0.45 },
+        { label: "Right as I'm about to fall asleep", frac: 0.40 },
+        { label: "This has literally never happened to me", frac: 0.15 },
+      ]
+    },
+  ];
+
+  let currentPop = START_POP;
+  let currentQ = 0;
+
+  const popNumber = document.getElementById('popNumber');
+  const popSub = document.getElementById('popSub');
+  const quizStage = document.getElementById('quizStage');
+  const finalCard = document.getElementById('finalCard');
+  const progressLabel = document.getElementById('progressLabel');
+
+  function formatNum(n) {
+    return Math.round(n).toLocaleString('en-US');
+  }
+
+  function animatePop(from, to, duration = 700) {
+    const start = performance.now();
+    function step(now) {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const val = from + (to - from) * eased;
+      popNumber.textContent = formatNum(val);
+      if (t < 1) requestAnimationFrame(step);
+      else popNumber.textContent = formatNum(to);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function renderQuestion() {
+    if (currentQ >= questions.length) {
+      renderFinal();
+      return;
+    }
+    const q = questions[currentQ];
+    progressLabel.textContent = `${currentQ + 1} / ${questions.length}`;
+    const optionsHtml = q.options.map((opt, i) =>
+      `<button class="option-btn" data-index="${i}">${opt.label}</button>`
+    ).join('');
+
+    quizStage.innerHTML = `
+      <div class="question-card active">
+        <div class="q-index mono">QUESTION ${currentQ + 1}</div>
+        <div class="q-text">${q.text}</div>
+        <div class="options">${optionsHtml}</div>
+      </div>
+    `;
+
+    quizStage.querySelectorAll('.option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        const frac = q.options[idx].frac;
+        const newPop = Math.max(currentPop * frac, 1);
+        animatePop(currentPop, newPop);
+        currentPop = newPop;
+        popSub.textContent = `after: "${q.options[idx].label.toLowerCase()}"`;
+        currentQ++;
+        setTimeout(renderQuestion, 550);
+      });
+    });
+  }
+
+  function renderFinal() {
+    quizStage.innerHTML = '';
+    finalCard.classList.add('active');
+    progressLabel.textContent = 'DONE';
+    const finalNumber = document.getElementById('finalNumber');
+    const finalCaption = document.getElementById('finalCaption');
+    const rounded = Math.round(currentPop);
+    finalNumber.textContent = formatNum(rounded);
+
+    let caption;
+    if (rounded > 1_000_000) {
+      caption = `You share this exact combination with about ${formatNum(rounded)} people on Earth right now. Comfortingly unremarkable.`;
+    } else if (rounded > 1000) {
+      caption = `Around ${formatNum(rounded)} people currently match you on all six. You could probably fill a large concert hall.`;
+    } else if (rounded > 10) {
+      caption = `Down to about ${formatNum(rounded)} people worldwide. You could all fit in one restaurant, awkwardly.`;
+    } else {
+      caption = `Statistically, you might be the only one. Which either makes you extremely rare, or means six pizza-and-handwriting questions aren't a very rigorous science. Probably the second one.`;
+    }
+    finalCaption.textContent = caption;
+  }
+
+  document.getElementById('againBtn').addEventListener('click', () => {
+    currentPop = START_POP;
+    currentQ = 0;
+    popNumber.textContent = formatNum(START_POP);
+    popSub.textContent = 'everyone alive, currently';
+    finalCard.classList.remove('active');
+    renderQuestion();
+  });
+
+  renderQuestion();
+</script>
+
+</body>
+</html>
