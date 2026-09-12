@@ -21,6 +21,12 @@ jobs:
           python-version: '3.11'
       - name: Install deps
         run: pip install youtube-transcript-api
+      - name: Test proxies
+        run: |
+          for p in 142.54.237.38:4145 67.201.59.70:4145 68.71.243.14:4145; do
+            echo "Testing $p"
+            curl -s --socks5 "$p" --connect-timeout 8 -o /dev/null -w "  HTTP:%{http_code} time:%{time_total}s\n" https://api.github.com || echo "  curl failed"
+          done
       - name: Fetch transcript
         run: |
           python3 -c "
