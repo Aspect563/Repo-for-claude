@@ -8,6 +8,9 @@ on:
         required: true
         default: '2VmjCxXBW-c'
 
+permissions:
+  contents: write
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
