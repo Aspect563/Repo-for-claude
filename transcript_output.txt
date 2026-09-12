@@ -1,7 +1,7 @@
 ALL ATTEMPTS FAILED:
-142.54.237.38:4145: InvalidSchema: Missing dependencies for SOCKS support.
-67.201.59.70:4145: InvalidSchema: Missing dependencies for SOCKS support.
-68.71.243.14:4145: InvalidSchema: Missing dependencies for SOCKS support.
+142.54.237.38:4145: SSLError: SOCKSHTTPSConnectionPool(host='www.youtube.com', port=443): Max retries exceeded with url: /watch?v=2VmjCxXBW-c (Caused by SSLError(SSLError(1, '[SSL] unknown error (_ssl.c:1016)')))
+67.201.59.70:4145: SSLError: SOCKSHTTPSConnectionPool(host='www.youtube.com', port=443): Max retries exceeded with url: /watch?v=2VmjCxXBW-c (Caused by SSLError(SSLError(1, '[SSL] unknown error (_ssl.c:1016)')))
+68.71.243.14:4145: SSLError: SOCKSHTTPSConnectionPool(host='www.youtube.com', port=443): Max retries exceeded with url: /watch?v=2VmjCxXBW-c (Caused by SSLError(SSLError(1, '[SSL] unknown error (_ssl.c:1016)')))
 no-proxy: RequestBlocked: 
 Could not retrieve a transcript for the video https://www.youtube.com/watch?v=2VmjCxXBW-c! This is most likely caused by:
 
