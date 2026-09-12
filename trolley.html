@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Trolley of Infinite Absurdity</title>
+<meta name="description" content="A rapid series of trolley problems that get progressively less about trolleys.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FFF8E7;
+    --ink: #1A1A2E;
+    --ink-soft: #2D2D44;
+    --accent: #FF6B35;
+    --accent-cool: #4ECDC4;
+    --line: rgba(26, 26, 46, 0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  ::selection { background: var(--accent); color: var(--paper); }
+
+  nav {
+    padding: 1.5rem 1.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  nav a { color: var(--ink-soft); text-decoration: none; }
+  nav a:hover { color: var(--accent); }
+
+  .score-track {
+    text-align: center;
+  }
+  .score-track .val { color: var(--accent); font-weight: 700; }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 1.5rem 5rem;
+    text-align: center;
+  }
+
+  .stage { width: 100%; max-width: 600px; }
+
+  .scenario-card { display: none; }
+  .scenario-card.active { display: block; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .s-index { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--ink-soft); margin-bottom: 1rem; }
+  .s-text {
+    font-size: clamp(1.35rem, 4.2vw, 1.9rem);
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 2.2rem;
+  }
+
+  .track-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .track-btn {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    padding: 1.1rem 1.5rem;
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    color: var(--ink);
+  }
+  .track-btn:hover { border-color: var(--accent); background: rgba(255,107,53,0.06); transform: translateY(-2px); }
+  .track-btn .tag { display: block; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--ink-soft); margin-bottom: 0.3rem; }
+
+  .final-card { display: none; text-align: center; }
+  .final-card.active { display: block; animation: fadeUp 0.5s ease; }
+  .final-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 1rem; }
+  .final-title {
+    font-size: clamp(1.9rem, 6vw, 3rem);
+    font-weight: 900;
+    line-height: 1.1;
+    max-width: 18ch;
+    margin: 0 auto;
+  }
+  .final-caption {
+    margin-top: 1.3rem;
+    max-width: 460px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+  .final-score {
+    margin-top: 1.8rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .final-score .n { color: var(--accent); font-weight: 700; }
+
+  .again-btn {
+    margin-top: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--line);
+    padding: 0.7rem 1.3rem;
+    border-radius: 100px;
+    cursor: pointer;
+  }
+  .again-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    opacity: 0.5;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">← back to idle machines</a>
+  <span class="mono score-track">CONSISTENCY: <span class="val" id="scoreVal">100</span></span>
+</nav>
+
+<main>
+  <div class="stage" id="stage"></div>
+
+  <div class="final-card" id="finalCard">
+    <div class="final-eyebrow mono">VERDICT</div>
+    <div class="final-title" id="finalTitle"></div>
+    <p class="final-caption" id="finalCaption"></p>
+    <div class="final-score mono">FINAL CONSISTENCY SCORE: <span class="n" id="finalScoreNum"></span> / 100</div>
+    <button class="again-btn" id="againBtn">Run the trolley again</button>
+  </div>
+</main>
+
+<footer>NO TROLLEYS, OR PRINCIPLES, WERE HARMED IN THE MAKING OF THIS SCORE.</footer>
+
+<script>
+  // Each scenario has two tracks. "utilitarian" = classic save-more-lives logic.
+  // "principle" = a rule-based / rights-based choice. Picking consistently down
+  // one axis keeps your score high; zig-zagging costs points.
+  const scenarios = [
+    {
+      text: "A runaway trolley is about to hit five people. You can pull a lever to divert it to a side track, where it will hit one person instead.",
+      tracks: [
+        { label: "Pull the lever. Five lives outweigh one.", tag: "MAIN TRACK", axis: "utilitarian" },
+        { label: "Don't pull it. I'm not choosing who dies.", tag: "SIDE TRACK", axis: "principle" },
+      ]
+    },
+    {
+      text: "Same trolley, same five people — but now the only way to stop it is to push a large stranger off a bridge onto the tracks.",
+      tracks: [
+        { label: "Push him. Math is math.", tag: "BRIDGE", axis: "utilitarian" },
+        { label: "I can't personally push someone to their death.", tag: "SIDELINE", axis: "principle" },
+      ]
+    },
+    {
+      text: "The trolley is now empty. It's just rolling toward a very nice sandwich. You can divert it to instead destroy a mediocre sandwich.",
+      tracks: [
+        { label: "Save the nice sandwich, obviously.", tag: "GOOD SANDWICH", axis: "utilitarian" },
+        { label: "A sandwich is a sandwich. I don't intervene on principle.", tag: "NO ACTION", axis: "principle" },
+      ]
+    },
+    {
+      text: "The trolley now contains one (1) trolley problem philosopher, who is extremely pleased with himself. The alternate track has no one on it.",
+      tracks: [
+        { label: "Divert it. Let him walk away and write a paper about it.", tag: "EMPTY TRACK", axis: "utilitarian" },
+        { label: "Leave it. He built this system. He can ride it.", tag: "STAY THE COURSE", axis: "principle" },
+      ]
+    },
+    {
+      text: "There is no trolley. There is no track. You are just holding a lever now, for reasons no one will explain to you.",
+      tracks: [
+        { label: "Pull it anyway. It's clearly what the lever is for.", tag: "PULL", axis: "utilitarian" },
+        { label: "Put the lever down. I refuse to participate in this.", tag: "REFUSE", axis: "principle" },
+      ]
+    },
+    {
+      text: "Final one: the trolley is your inbox. Five small emails, or one big scary one.",
+      tracks: [
+        { label: "Clear the five small ones first. Momentum matters.", tag: "QUICK WINS", axis: "utilitarian" },
+        { label: "Open the scary one first, on principle.", tag: "RIP THE BANDAID", axis: "principle" },
+      ]
+    },
+  ];
+
+  let currentIndex = 0;
+  let score = 100;
+  let lastAxis = null;
+  let axisSwitches = 0;
+
+  const stage = document.getElementById('stage');
+  const scoreVal = document.getElementById('scoreVal');
+  const finalCard = document.getElementById('finalCard');
+
+  function renderScenario() {
+    if (currentIndex >= scenarios.length) {
+      renderFinal();
+      return;
+    }
+    const s = scenarios[currentIndex];
+    const tracksHtml = s.tracks.map((t, i) =>
+      `<button class="track-btn" data-index="${i}"><span class="tag mono">${t.tag}</span>${t.label}</button>`
+    ).join('');
+
+    stage.innerHTML = `
+      <div class="scenario-card active">
+        <div class="s-index mono">SCENARIO ${currentIndex + 1} / ${scenarios.length}</div>
+        <div class="s-text">${s.text}</div>
+        <div class="track-row">${tracksHtml}</div>
+      </div>
+    `;
+
+    stage.querySelectorAll('.track-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        const axis = s.tracks[idx].axis;
+        if (lastAxis !== null && axis !== lastAxis) {
+          axisSwitches++;
+          score = Math.max(score - 15, 0);
+          scoreVal.textContent = score;
+        }
+        lastAxis = axis;
+        currentIndex++;
+        setTimeout(renderScenario, 300);
+      });
+    });
+  }
+
+  function renderFinal() {
+    stage.innerHTML = '';
+    finalCard.classList.add('active');
+    const finalTitle = document.getElementById('finalTitle');
+    const finalCaption = document.getElementById('finalCaption');
+    const finalScoreNum = document.getElementById('finalScoreNum');
+    finalScoreNum.textContent = score;
+
+    let title, caption;
+    if (score >= 90) {
+      title = "You are a committed utilitarian, or a committed rule-follower. Rare, either way.";
+      caption = "You picked one philosophy and rode it into the ground, sandwiches and all. Actual philosophers would be either delighted or deeply suspicious of you.";
+    } else if (score >= 55) {
+      title = "You're mostly consistent, with a few very human exceptions.";
+      caption = `You switched approaches ${axisSwitches} time${axisSwitches === 1 ? '' : 's'}. Which is honestly how most real moral reasoning works — right up until a philosophy professor asks you to defend it out loud.`;
+    } else {
+      title = "You have no fixed philosophy and you should be very proud of that.";
+      caption = "You picked whatever felt right in the moment, every single time, including for the sandwich. This is either wisdom or chaos. Statistically, probably chaos.";
+    }
+    finalTitle.textContent = title;
+    finalCaption.textContent = caption;
+  }
+
+  document.getElementById('againBtn').addEventListener('click', () => {
+    currentIndex = 0;
+    score = 100;
+    lastAxis = null;
+    axisSwitches = 0;
+    scoreVal.textContent = score;
+    finalCard.classList.remove('active');
+    renderScenario();
+  });
+
+  renderScenario();
+</script>
+
+</body>
+</html>
