@@ -35,7 +35,12 @@ jobs:
                   proxy_password="icrjm8r2wyc6",
               )
               api = YouTubeTranscriptApi(proxy_config=config)
-              t = api.fetch(vid)
+              transcript_list = api.list(vid)
+              try:
+                  t = transcript_list.find_transcript(['en'])
+              except Exception:
+                  t = transcript_list.find_transcript(['hi']).translate('en')
+              t = t.fetch()
               result = "\n".join(s.text for s in t)
               with open("transcript_output.txt", "w") as f:
                   f.write(result)
