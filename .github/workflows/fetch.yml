@@ -23,6 +23,7 @@ jobs:
         run: pip install youtube-transcript-api "requests[socks]" PySocks
       - name: Test proxies raw
         run: |
+          {
           for p in 142.54.237.38:4145 67.201.59.70:4145 68.71.243.14:4145; do
             echo "=== Testing $p ==="
             echo "--- Plain HTTP (no TLS) via proxy ---"
@@ -31,6 +32,8 @@ jobs:
             curl -sv --socks5 "$p" --connect-timeout 8 https://example.com 2>&1 | grep -E "Connected|SSL|TLS|error|HTTP/" | head -10
             echo ""
           done
+          } > proxy_diagnostics.txt 2>&1
+          cat proxy_diagnostics.txt
       - name: Fetch transcript via proxies
         run: |
           cat > fetch.py << 'PYEOF'
@@ -77,6 +80,6 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add transcript_output.txt
-          git commit -m "Add transcript output" || echo "nothing to commit"
+          git add transcript_output.txt proxy_diagnostics.txt
+          git commit -m "Add transcript and diagnostic output" || echo "nothing to commit"
           git push
