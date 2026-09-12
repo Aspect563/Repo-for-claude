@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install deps
-        run: pip install youtube-transcript-api
+        run: pip install youtube-transcript-api "requests[socks]" PySocks
       - name: Test proxies raw
         run: |
           for p in 142.54.237.38:4145 67.201.59.70:4145 68.71.243.14:4145; do
